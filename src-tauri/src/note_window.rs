@@ -2,7 +2,15 @@ use std::time::Duration;
 
 use objc2::MainThreadMarker;
 use objc2_app_kit::{NSApplication, NSWindow, NSWindowCollectionBehavior};
-use tauri::{AppHandle, Emitter, Manager, WebviewWindow};
+use tauri::{
+    AppHandle, Emitter, LogicalPosition, LogicalSize, Manager, PhysicalPosition, PhysicalSize,
+    WebviewWindow,
+};
+
+use crate::{
+    geometry::{self, Rect, Screen},
+    preferences::PreferencesStore,
+};
 
 pub const SHORTCUT: &str = "Alt+Cmd+N";
 pub const SHOWN: &str = "shown";
@@ -31,6 +39,7 @@ pub fn show(app: &AppHandle) -> tauri::Result<()> {
     if window.is_visible()? {
         return window.set_focus();
     }
+    log_failure(restore_geometry(app, &window));
     app.show()?;
     window.show()?;
     window.set_focus()?;
@@ -43,6 +52,7 @@ pub fn hide(app: &AppHandle) -> tauri::Result<()> {
     if !window.is_visible()? {
         return Ok(());
     }
+    log_failure(remember_geometry(app, &window));
     window.hide()?;
     app.hide()?;
     app.emit(HIDDEN, ())
@@ -74,6 +84,57 @@ pub fn hide_then_quit(app: AppHandle) {
         std::thread::sleep(QUIT_FLUSH_GRACE);
         app.exit(0);
     });
+}
+
+pub fn log_failure(result: tauri::Result<()>) {
+    if let Err(error) = result {
+        eprintln!("note window: {error}");
+    }
+}
+
+fn logical_rect(position: PhysicalPosition<i32>, size: PhysicalSize<u32>, scale: f64) -> Rect {
+    let position: LogicalPosition<f64> = position.to_logical(scale);
+    let size: LogicalSize<f64> = size.to_logical(scale);
+    Rect::new(
+        position.x.round() as i32,
+        position.y.round() as i32,
+        size.width.round() as u32,
+        size.height.round() as u32,
+    )
+}
+
+fn restore_geometry(app: &AppHandle, window: &WebviewWindow) -> tauri::Result<()> {
+    let screens: Vec<Screen> = app
+        .available_monitors()?
+        .iter()
+        .map(|m| {
+            let area = m.work_area();
+            Screen {
+                bounds: logical_rect(*m.position(), *m.size(), m.scale_factor()),
+                work_area: logical_rect(area.position, area.size, m.scale_factor()),
+            }
+        })
+        .collect();
+    let primary_scale = app.primary_monitor()?.map(|m| m.scale_factor()).unwrap_or(1.0);
+    let cursor: LogicalPosition<f64> = app.cursor_position()?.to_logical(primary_scale);
+    let remembered = app.state::<PreferencesStore>().read(|p| p.window);
+    let Some(rect) = geometry::place(remembered, &screens, (cursor.x as i32, cursor.y as i32))
+    else {
+        return Ok(());
+    };
+    window.set_position(LogicalPosition::new(rect.x, rect.y))?;
+    window.set_size(LogicalSize::new(rect.width, rect.height))
+}
+
+fn remember_geometry(app: &AppHandle, window: &WebviewWindow) -> tauri::Result<()> {
+    let rect = logical_rect(
+        window.outer_position()?,
+        window.outer_size()?,
+        window.scale_factor()?,
+    );
+    app.state::<PreferencesStore>()
+        .update(|p| p.window = Some(rect))
+        .map_err(Into::into)
 }
 
 pub fn join_all_spaces(app: &AppHandle) -> tauri::Result<()> {

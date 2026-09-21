@@ -57,3 +57,13 @@ Fichier de Note par défaut : `~/Library/Application Support/com.aleclercq.quick
 - [x] Même scénario avec des modifications locales non écrites : le local est conservé (tests Vitest)
 - [x] Fichier absent au premier lancement : Note vide, fichier créé à la première écriture
 - [ ] Fichier corrompu : bandeau d'erreur dans la Note, app toujours utilisable, fichier non écrasé
+
+### Géométrie (#5)
+
+Préférences : `~/Library/Application Support/com.aleclercq.quicknote/preferences.json`.
+
+- [x] Déplacer/redimensionner la Note, masquer, afficher : même géométrie
+- [x] Idem après quitter/relancer
+- [x] Géométrie mémorisée hors de tout écran : la Note réapparaît centrée sur l'écran du curseur, même taille
+- [ ] Écran externe débranché avec la Note mémorisée dessus : même comportement
+- [x] Premier lancement : 80 % de l'écran du curseur, centré
