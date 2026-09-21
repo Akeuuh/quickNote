@@ -82,7 +82,7 @@ Préférences : `~/Library/Application Support/com.aleclercq.quicknote/preferenc
 
 - [ ] Menu barre de menus : « Préférences… » ouvre la fenêtre
 - [ ] Capturer un nouveau Raccourci : effectif immédiatement, persistant après redémarrage
-- [ ] Capturer un Raccourci déjà pris (ex. ⌘Space) : erreur affichée, ancien Raccourci toujours fonctionnel
+- [ ] Capturer un Raccourci déjà pris par une autre app (Carbon) : erreur affichée, ancien Raccourci toujours fonctionnel. Les raccourcis système (⌘Space) ne remontent pas d'erreur : ils prennent simplement le dessus
 - [ ] « Créer un nouveau fichier… » vers un dossier iCloud : la Note bascule dessus sans redémarrage ; dessiner y écrit
 - [ ] « Ouvrir un fichier existant… » sur un `.excalidraw` : son contenu est chargé
 - [ ] Modifications en attente avant la bascule : écrites dans l'ancien fichier (tests Vitest)

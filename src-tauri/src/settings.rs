@@ -59,10 +59,12 @@ pub fn set_shortcut(app: AppHandle, store: State<PreferencesStore>, shortcut: St
         return Ok(());
     }
     app.global_shortcut()
-        .unregister_all()
+        .unregister(previous.as_str())
         .map_err(|e| e.to_string())?;
     if let Err(e) = register_shortcut(&app, &shortcut) {
-        let _ = register_shortcut(&app, &previous);
+        if let Err(rollback) = register_shortcut(&app, &previous) {
+            eprintln!("shortcut: rollback to {previous} failed: {rollback}");
+        }
         return Err(e.to_string());
     }
     store

@@ -13,6 +13,10 @@ class FakeBridge implements NoteBridge {
   writeGate: Promise<void> | null = null;
   readGate: (() => void) | null = null;
   view: View | null = null;
+  files = new Map<string, { content: string; mtime: number }>();
+  path = "default.excalidraw";
+  setPathError: Error | null = null;
+  private pathHandlers = new Set<(path: string) => void>();
   private handlers = new Set<(state: Visibility) => void>();
 
   async readNote(): Promise<NoteFile> {
@@ -48,6 +52,25 @@ class FakeBridge implements NoteBridge {
 
   async hideNote(): Promise<void> {}
 
+  async setNotePath(path: string): Promise<void> {
+    if (this.setPathError) throw this.setPathError;
+    this.files.set(this.path, { content: this.content ?? "", mtime: this.mtime });
+    this.path = path;
+    const next = this.files.get(path);
+    this.content = next?.content ?? null;
+    this.mtime = next?.mtime ?? 0;
+  }
+
+  onNotePathRequested(handler: (path: string) => void): () => void {
+    this.pathHandlers.add(handler);
+    return () => this.pathHandlers.delete(handler);
+  }
+
+  async requestPath(path: string): Promise<void> {
+    this.pathHandlers.forEach((h) => h(path));
+    await vi.advanceTimersByTimeAsync(0);
+  }
+
   onVisibility(handler: (state: Visibility) => void): () => void {
     this.handlers.add(handler);
     return () => this.handlers.delete(handler);
@@ -67,7 +90,7 @@ class FakeBridge implements NoteBridge {
 const VIEW: View = { scrollX: 10, scrollY: -20, zoom: 1.5 };
 
 let bridge: FakeBridge;
-let onReload: Mock<(content: string) => void>;
+let onReload: Mock<(content: string | null) => void>;
 let onView: Mock<(view: View) => void>;
 let currentView: View;
 let onError: Mock<(message: string) => void>;
@@ -276,5 +299,47 @@ describe("Vue", () => {
     session.start();
     await vi.advanceTimersByTimeAsync(0);
     expect(onView).not.toHaveBeenCalled();
+  });
+});
+
+describe("switchFile", () => {
+  it("flushes pending changes to the old file before switching", async () => {
+    await session.load();
+    session.start();
+    session.onChange(() => "old-pending");
+    await bridge.requestPath("other.excalidraw");
+    expect(bridge.files.get("default.excalidraw")?.content).toBe("old-pending");
+    expect(bridge.path).toBe("other.excalidraw");
+  });
+
+  it("loads the new file when it exists, or an empty Note otherwise", async () => {
+    bridge.files.set("existing.excalidraw", { content: "existing", mtime: 7 });
+    await session.load();
+    session.start();
+    await bridge.requestPath("existing.excalidraw");
+    expect(onReload).toHaveBeenLastCalledWith("existing");
+    await bridge.requestPath("fresh.excalidraw");
+    expect(onReload).toHaveBeenLastCalledWith(null);
+    expect(bridge.writes).toEqual([]);
+  });
+
+  it("keeps the old file when its pending write fails", async () => {
+    await session.load();
+    session.start();
+    bridge.writeError = new Error("disque plein");
+    session.onChange(() => "unsaved");
+    await bridge.requestPath("other.excalidraw");
+    expect(bridge.path).toBe("default.excalidraw");
+    expect(onError).toHaveBeenCalledWith("Error: disque plein");
+  });
+
+  it("does not treat the loaded content as pending after a switch", async () => {
+    bridge.files.set("existing.excalidraw", { content: "existing", mtime: 7 });
+    await session.load();
+    session.start();
+    await bridge.requestPath("existing.excalidraw");
+    session.onChange(() => "existing");
+    await bridge.emit("hidden");
+    expect(bridge.writes).toEqual([]);
   });
 });
