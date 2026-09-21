@@ -34,3 +34,20 @@ body,
 .default-sidebar-trigger {
   display: none;
 }
+
+.note__error {
+  flex: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 12px;
+  font: 13px -apple-system, system-ui, sans-serif;
+  color: #7a1f1f;
+  background: #fde8e8;
+}
+
+.note[data-theme="dark"] .note__error {
+  color: #f4b4b4;
+  background: #3a1d1d;
+}

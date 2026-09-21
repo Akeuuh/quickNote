@@ -1,4 +1,9 @@
 import { Excalidraw, MainMenu } from "@excalidraw/excalidraw";
+import type { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types";
+import { useEffect, useRef, useState } from "react";
+import { NoteSession } from "./note/NoteSession";
+import { applyScene, parseScene, serializeScene } from "./note/scene";
+import { tauriBridge } from "./note/tauriBridge";
 import { useSystemTheme } from "./systemTheme";
 
 const UI_OPTIONS = {
@@ -15,12 +20,58 @@ const UI_OPTIONS = {
 
 function App() {
   const theme = useSystemTheme();
+  const [api, setApi] = useState<ExcalidrawImperativeAPI | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const sessionRef = useRef<NoteSession | null>(null);
+
+  useEffect(() => {
+    if (!api) return;
+    let active = true;
+    let stop: (() => void) | undefined;
+    const showScene = (content: string) =>
+      parseScene(content)
+        .then((scene) => {
+          applyScene(api, scene);
+          return true;
+        })
+        .catch((e) => {
+          setError(`Fichier de Note illisible, sauvegarde suspendue : ${String(e)}`);
+          return false;
+        });
+    const session = new NoteSession(tauriBridge, { onReload: showScene, onError: setError });
+    session.load().then(async (content) => {
+      if (!active) return;
+      if (content !== null && !(await showScene(content))) return;
+      if (!active) return;
+      stop = session.start();
+      sessionRef.current = session;
+    });
+    return () => {
+      active = false;
+      sessionRef.current = null;
+      stop?.();
+    };
+  }, [api]);
 
   return (
     <div className="note" data-theme={theme}>
       <div className="note__handle" data-tauri-drag-region />
+      {error && (
+        <div className="note__error" role="alert">
+          {error}
+          <button onClick={() => setError(null)}>OK</button>
+        </div>
+      )}
       <div className="note__canvas">
-        <Excalidraw theme={theme} UIOptions={UI_OPTIONS} autoFocus>
+        <Excalidraw
+          theme={theme}
+          UIOptions={UI_OPTIONS}
+          autoFocus
+          excalidrawAPI={setApi}
+          onChange={() => {
+            if (api) sessionRef.current?.onChange(() => serializeScene(api));
+          }}
+        >
           <MainMenu>
             <MainMenu.DefaultItems.SaveAsImage />
           </MainMenu>

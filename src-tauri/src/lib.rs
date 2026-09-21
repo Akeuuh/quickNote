@@ -1,3 +1,4 @@
+mod note_file;
 mod note_window;
 mod tray;
 
@@ -13,8 +14,14 @@ fn log_failure(result: tauri::Result<()>) {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
+        .invoke_handler(tauri::generate_handler![
+            note_file::read_note,
+            note_file::write_note,
+            note_file::note_mtime
+        ])
         .setup(|app| {
             app.set_activation_policy(ActivationPolicy::Accessory);
+            app.manage(note_file::NotePath::default_for(app.handle())?);
             tray::setup(app.handle())?;
             note_window::join_all_spaces(app.handle())?;
 
@@ -33,12 +40,4 @@ pub fn run() {
         })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
-}
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn toolchain_runs_tests() {
-        assert_eq!(1 + 1, 2);
-    }
 }

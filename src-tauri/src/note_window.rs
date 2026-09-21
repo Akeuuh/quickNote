@@ -10,6 +10,7 @@ pub const HIDDEN: &str = "hidden";
 
 const LABEL: &str = "main";
 const BLUR_SETTLE: Duration = Duration::from_millis(50);
+const QUIT_FLUSH_GRACE: Duration = Duration::from_millis(300);
 
 pub fn is_note(window: &tauri::Window) -> bool {
     window.label() == LABEL
@@ -64,6 +65,14 @@ pub fn hide_if_app_deactivated(app: AppHandle, on_failure: fn(tauri::Result<()>)
                 on_failure(hide(&app));
             }
         });
+    });
+}
+
+pub fn hide_then_quit(app: AppHandle) {
+    let _ = hide(&app);
+    std::thread::spawn(move || {
+        std::thread::sleep(QUIT_FLUSH_GRACE);
+        app.exit(0);
     });
 }
 

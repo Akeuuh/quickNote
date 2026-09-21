@@ -43,3 +43,17 @@ Checklist à dérouler avant une release. Chaque ticket ajoute ses cas.
 - [ ] Fenêtre sans barre de titre, coins arrondis, ombre ; la bande du haut déplace la fenêtre ; les bords redimensionnent
 - [x] Icône barre de menus avec « Afficher la Note » et « Quitter » ; aucune icône Dock, absente de Cmd+Tab
 - [ ] En dev : `[note] shown` / `[note] hidden` dans la console web à chaque bascule
+
+### Persistance (#4)
+
+Fichier de Note par défaut : `~/Library/Application Support/com.aleclercq.quicknote/note.excalidraw`.
+
+- [x] Dessiner, quitter, relancer : le contenu est restauré
+- [ ] Coller une image, quitter, relancer : l'image est restaurée
+- [ ] Le fichier s'ouvre sur excalidraw.com
+- [x] Une rafale de modifications produit une seule écriture après ~500 ms d'inactivité (tests Vitest)
+- [x] Masquer la Note écrit immédiatement les modifications en attente (tests Vitest)
+- [x] Modifier le fichier à la main pendant que la Note est masquée, puis l'afficher : le nouveau contenu apparaît
+- [x] Même scénario avec des modifications locales non écrites : le local est conservé (tests Vitest)
+- [x] Fichier absent au premier lancement : Note vide, fichier créé à la première écriture
+- [ ] Fichier corrompu : bandeau d'erreur dans la Note, app toujours utilisable, fichier non écrasé
