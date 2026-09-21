@@ -143,3 +143,13 @@ Préférences : `~/Library/Application Support/com.aleclercq.quicknote/preferenc
 - [ ] La Release contient `QuickNote.app.tar.gz` + `.sig`, le `.dmg` et `latest.json`
 - [ ] `spctl --assess` accepte l'app ; elle s'ouvre sans avertissement Gatekeeper sur un Mac vierge
 - [ ] Supprimer un secret et relancer : le workflow échoue à la première étape en nommant le secret
+
+### Updater (#9)
+
+L'app interroge `latest.json` de la dernière Release au lancement puis toutes les 24 h. Pour tester en local : publier une Release de version supérieure, ou servir un `latest.json` de test et pointer `plugins.updater.endpoints` dessus dans une build locale.
+
+- [ ] Version locale inférieure à la dernière Release : « Mise à jour disponible (vX.Y.Z) » apparaît dans le menu tray après le lancement
+- [ ] Sans mise à jour : aucune entrée
+- [ ] Cliquer l'entrée télécharge, installe, relance ; la nouvelle version tourne
+- [ ] Contenu de la Note et Vue intacts après relancement
+- [x] Échec réseau (aucune Release publiée) : aucune erreur visible, app utilisable, log `updater: check failed`
