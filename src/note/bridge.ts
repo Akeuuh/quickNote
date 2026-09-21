@@ -13,5 +13,7 @@ export interface NoteBridge {
   readView(): Promise<View | null>;
   writeView(view: View): Promise<void>;
   hideNote(): Promise<void>;
+  setNotePath(path: string): Promise<void>;
+  onNotePathRequested(handler: (path: string) => void): () => void;
   onVisibility(handler: (state: Visibility) => void): () => void;
 }

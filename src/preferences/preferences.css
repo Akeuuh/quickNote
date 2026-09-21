@@ -1,0 +1,60 @@
+:root {
+  color-scheme: light dark;
+  font: 13px -apple-system, system-ui, sans-serif;
+}
+
+body {
+  margin: 0;
+  padding: 20px;
+  user-select: none;
+}
+
+.prefs {
+  display: grid;
+  gap: 18px;
+}
+
+.prefs__row {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  align-items: start;
+  gap: 12px;
+}
+
+.prefs__row > span {
+  text-align: right;
+  padding-top: 4px;
+}
+
+.prefs__shortcut {
+  width: 120px;
+  text-align: center;
+  font-size: 15px;
+}
+
+.prefs__shortcut[aria-invalid="true"] {
+  outline: 2px solid #d33;
+}
+
+.prefs__error {
+  margin: -10px 0 0 152px;
+  color: #d33;
+}
+
+.prefs__path {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.prefs__path code {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  user-select: text;
+}
+
+.prefs__actions {
+  display: flex;
+  gap: 8px;
+}

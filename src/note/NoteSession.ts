@@ -2,7 +2,7 @@ import type { NoteBridge } from "./bridge";
 import type { View } from "./view";
 
 export interface NoteSessionHandlers {
-  onReload(content: string): void;
+  onReload(content: string | null): void;
   onView(view: View): void;
   currentView(): View;
   onError(message: string): void;
@@ -36,7 +36,8 @@ export class NoteSession {
 
   start(): () => void {
     void this.restoreView();
-    return this.bridge.onVisibility((state) => {
+    const stopPathRequests = this.bridge.onNotePathRequested((path) => void this.switchFile(path));
+    const stopVisibility = this.bridge.onVisibility((state) => {
       if (state === "hidden") {
         void this.saveView();
         void this.flush();
@@ -45,6 +46,30 @@ export class NoteSession {
           await this.reloadIfChangedOnDisk();
           await this.restoreView();
         });
+      }
+    });
+    return () => {
+      stopPathRequests();
+      stopVisibility();
+    };
+  }
+
+  switchFile(path: string): Promise<void> {
+    if (this.timer) {
+      clearTimeout(this.timer);
+      this.timer = null;
+    }
+    return this.enqueue(async () => {
+      await this.write();
+      if (this.pending) return;
+      try {
+        await this.bridge.setNotePath(path);
+        const { content, mtime } = await this.bridge.readNote();
+        this.knownMtime = mtime;
+        this.lastWritten = content;
+        this.handlers.onReload(content);
+      } catch (error) {
+        this.handlers.onError(String(error));
       }
     });
   }

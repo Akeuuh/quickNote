@@ -20,6 +20,9 @@ pub struct View {
 pub struct Preferences {
     pub window: Option<Rect>,
     pub view: Option<View>,
+    pub shortcut: Option<String>,
+    pub note_path: Option<PathBuf>,
+    pub autostart: Option<bool>,
 }
 
 pub struct PreferencesStore {

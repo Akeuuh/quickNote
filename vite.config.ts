@@ -17,6 +17,11 @@ export default defineConfig({
     }),
   ],
   clearScreen: false,
+  build: {
+    rollupOptions: {
+      input: ["index.html", "preferences.html"],
+    },
+  },
   server: {
     port: 1420,
     strictPort: true,

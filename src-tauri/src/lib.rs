@@ -3,35 +3,36 @@ mod geometry;
 mod note_file;
 mod note_window;
 mod preferences;
+mod settings;
 mod tray;
 
 use tauri::{ActivationPolicy, Manager, WindowEvent};
-use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
 
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_autostart::Builder::new().build())
         .invoke_handler(tauri::generate_handler![
             note_file::read_note,
             note_file::write_note,
             note_file::note_mtime,
             preferences::get_view,
             preferences::set_view,
-            note_window::hide_note
+            note_window::hide_note,
+            note_file::set_note_path,
+            settings::get_settings,
+            settings::set_shortcut,
+            settings::set_autostart
         ])
         .setup(|app| {
             app.set_activation_policy(ActivationPolicy::Accessory);
-            app.manage(note_file::NotePath::default_for(app.handle())?);
             app.manage(preferences::PreferencesStore::load(app.handle())?);
+            app.manage(note_file::NotePath::from_preferences(app.handle())?);
             tray::setup(app.handle())?;
             note_window::join_all_spaces(app.handle())?;
-
-            app.global_shortcut()
-                .on_shortcut(note_window::SHORTCUT, |app, _, event| {
-                    if event.state == ShortcutState::Pressed {
-                        note_window::log_failure(note_window::toggle(app));
-                    }
-                })?;
+            settings::enable_autostart_on_first_launch(app.handle());
+            settings::register_shortcut(app.handle(), &settings::current_shortcut(app.handle()))?;
             Ok(())
         })
         .on_window_event(|window, event| {

@@ -8,20 +8,28 @@ use std::{
 use serde::Serialize;
 use tauri::{AppHandle, Manager, State};
 
-use crate::atomic_write::atomic_write;
+use crate::{atomic_write::atomic_write, preferences::PreferencesStore};
 
 pub const DEFAULT_FILE_NAME: &str = "note.excalidraw";
 
-pub struct NotePath(pub Mutex<PathBuf>);
+pub struct NotePath(Mutex<PathBuf>);
 
 impl NotePath {
-    pub fn default_for(app: &AppHandle) -> tauri::Result<Self> {
-        let dir = app.path().app_data_dir()?;
-        Ok(Self(Mutex::new(dir.join(DEFAULT_FILE_NAME))))
+    pub fn from_preferences(app: &AppHandle) -> tauri::Result<Self> {
+        let stored = app.state::<PreferencesStore>().read(|p| p.note_path.clone());
+        let path = match stored {
+            Some(path) => path,
+            None => app.path().app_data_dir()?.join(DEFAULT_FILE_NAME),
+        };
+        Ok(Self(Mutex::new(path)))
     }
 
-    fn get(&self) -> PathBuf {
+    pub fn get(&self) -> PathBuf {
         self.0.lock().expect("note path lock").clone()
+    }
+
+    fn set(&self, path: PathBuf) {
+        *self.0.lock().expect("note path lock") = path;
     }
 }
 
@@ -73,6 +81,19 @@ pub fn read_note(note_path: State<NotePath>) -> Result<NoteFile, String> {
 #[tauri::command]
 pub fn write_note(note_path: State<NotePath>, content: String) -> Result<u64, String> {
     write(&note_path.get(), &content).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn set_note_path(
+    note_path: State<NotePath>,
+    store: State<PreferencesStore>,
+    path: PathBuf,
+) -> Result<(), String> {
+    store
+        .update(|p| p.note_path = Some(path.clone()))
+        .map_err(|e| e.to_string())?;
+    note_path.set(path);
+    Ok(())
 }
 
 #[tauri::command]
