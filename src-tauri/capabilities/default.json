@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Capability for the main window",
-  "windows": ["main"],
-  "permissions": ["core:default", "core:window:allow-start-dragging"]
+  "description": "Capability for the Note and Preferences windows",
+  "windows": ["main", "preferences"],
+  "permissions": ["core:default", "core:window:allow-start-dragging", "dialog:default"]
 }

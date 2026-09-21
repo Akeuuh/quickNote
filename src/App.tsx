@@ -29,8 +29,10 @@ function App() {
     if (!api) return;
     let active = true;
     let stop: (() => void) | undefined;
-    const showScene = (content: string) =>
-      parseScene(content)
+    const showScene = (content: string | null) =>
+      content === null
+        ? Promise.resolve(api.resetScene()).then(() => true)
+        : parseScene(content)
         .then((scene) => {
           applyScene(api, scene);
           return true;

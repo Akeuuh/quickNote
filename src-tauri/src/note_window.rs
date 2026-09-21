@@ -12,7 +12,6 @@ use crate::{
     preferences::PreferencesStore,
 };
 
-pub const SHORTCUT: &str = "Alt+Cmd+N";
 pub const SHOWN: &str = "shown";
 pub const HIDDEN: &str = "hidden";
 

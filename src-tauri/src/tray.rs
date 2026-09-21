@@ -4,9 +4,10 @@ use tauri::{
     AppHandle,
 };
 
-use crate::note_window;
+use crate::{note_window, settings};
 
 const SHOW_NOTE: &str = "show-note";
+const PREFERENCES: &str = "preferences";
 const QUIT: &str = "quit";
 
 pub fn setup(app: &AppHandle) -> tauri::Result<()> {
@@ -14,6 +15,7 @@ pub fn setup(app: &AppHandle) -> tauri::Result<()> {
         app,
         &[
             &MenuItem::with_id(app, SHOW_NOTE, "Afficher la Note", true, None::<&str>)?,
+            &MenuItem::with_id(app, PREFERENCES, "Préférences…", true, None::<&str>)?,
             &PredefinedMenuItem::separator(app)?,
             &MenuItem::with_id(app, QUIT, "Quitter", true, None::<&str>)?,
         ],
@@ -29,6 +31,7 @@ pub fn setup(app: &AppHandle) -> tauri::Result<()> {
                     eprintln!("note window: {error}");
                 }
             }
+            PREFERENCES => note_window::log_failure(settings::open_window(app)),
             QUIT => note_window::hide_then_quit(app.clone()),
             _ => {}
         })

@@ -77,3 +77,13 @@ Préférences : `~/Library/Application Support/com.aleclercq.quicknote/preferenc
 - [ ] Échap avec une sélection désélectionne sans masquer (désélection faite par QuickNote : Excalidraw 0.18 ne désélectionne pas sur Échap)
 - [x] Échap avec un outil actif revient à la sélection sans masquer
 - [x] Échap sans rien à annuler masque la Note
+
+### Préférences (#7)
+
+- [ ] Menu barre de menus : « Préférences… » ouvre la fenêtre
+- [ ] Capturer un nouveau Raccourci : effectif immédiatement, persistant après redémarrage
+- [ ] Capturer un Raccourci déjà pris (ex. ⌘Space) : erreur affichée, ancien Raccourci toujours fonctionnel
+- [ ] « Créer un nouveau fichier… » vers un dossier iCloud : la Note bascule dessus sans redémarrage ; dessiner y écrit
+- [ ] « Ouvrir un fichier existant… » sur un `.excalidraw` : son contenu est chargé
+- [ ] Modifications en attente avant la bascule : écrites dans l'ancien fichier (tests Vitest)
+- [ ] Lancement au login : activé au premier lancement, désactivable, visible dans Réglages Système › Général › Ouverture
