@@ -12,14 +12,20 @@
   "app": {
     "windows": [
       {
+        "label": "main",
         "title": "QuickNote",
         "width": 1024,
-        "height": 720
+        "height": 720,
+        "decorations": false,
+        "transparent": true,
+        "alwaysOnTop": true,
+        "visible": false
       }
     ],
     "security": {
       "csp": null
-    }
+    },
+    "macOSPrivateApi": true
   },
   "bundle": {
     "active": true,
