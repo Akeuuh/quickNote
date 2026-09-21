@@ -5,6 +5,7 @@ mod note_window;
 mod preferences;
 mod settings;
 mod tray;
+mod updater;
 
 use tauri::{ActivationPolicy, Manager, WindowEvent};
 
@@ -13,6 +14,7 @@ pub fn run() {
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_autostart::Builder::new().build())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .invoke_handler(tauri::generate_handler![
             note_file::read_note,
             note_file::write_note,
@@ -33,6 +35,7 @@ pub fn run() {
             note_window::join_all_spaces(app.handle())?;
             settings::enable_autostart_on_first_launch(app.handle());
             settings::register_shortcut(app.handle(), &settings::current_shortcut(app.handle()))?;
+            updater::start_periodic_checks(app.handle().clone());
             Ok(())
         })
         .on_window_event(|window, event| {
