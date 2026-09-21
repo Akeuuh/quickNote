@@ -1,16 +1,25 @@
 use std::{fs, io, path::PathBuf, sync::Mutex};
 
 use serde::{Deserialize, Serialize};
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, Manager, State};
 
 use crate::{atomic_write::atomic_write, geometry::Rect};
 
 const FILE_NAME: &str = "preferences.json";
 
+#[derive(Clone, Copy, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct View {
+    pub scroll_x: f64,
+    pub scroll_y: f64,
+    pub zoom: f64,
+}
+
 #[derive(Default, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Preferences {
     pub window: Option<Rect>,
+    pub view: Option<View>,
 }
 
 pub struct PreferencesStore {
@@ -44,4 +53,14 @@ impl PreferencesStore {
         let json = serde_json::to_string_pretty(&*prefs)?;
         atomic_write(&self.path, &json)
     }
+}
+
+#[tauri::command]
+pub fn get_view(store: State<PreferencesStore>) -> Option<View> {
+    store.read(|p| p.view)
+}
+
+#[tauri::command]
+pub fn set_view(store: State<PreferencesStore>, view: View) -> Result<(), String> {
+    store.update(|p| p.view = Some(view)).map_err(|e| e.to_string())
 }

@@ -67,3 +67,13 @@ Préférences : `~/Library/Application Support/com.aleclercq.quicknote/preferenc
 - [x] Géométrie mémorisée hors de tout écran : la Note réapparaît centrée sur l'écran du curseur, même taille
 - [ ] Écran externe débranché avec la Note mémorisée dessus : même comportement
 - [x] Premier lancement : 80 % de l'écran du curseur, centré
+
+### Vue et Échap (#6)
+
+- [x] Zoomer et scroller, masquer, afficher : même Vue
+- [x] Idem après quitter/relancer
+- [x] Le Fichier de Note ne contient pas la Vue (`preferences.json` la porte)
+- [ ] Échap pendant l'édition d'un texte sort de l'édition sans masquer
+- [ ] Échap avec une sélection désélectionne sans masquer (désélection faite par QuickNote : Excalidraw 0.18 ne désélectionne pas sur Échap)
+- [x] Échap avec un outil actif revient à la sélection sans masquer
+- [x] Échap sans rien à annuler masque la Note

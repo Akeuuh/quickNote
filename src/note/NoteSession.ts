@@ -1,7 +1,10 @@
 import type { NoteBridge } from "./bridge";
+import type { View } from "./view";
 
 export interface NoteSessionHandlers {
   onReload(content: string): void;
+  onView(view: View): void;
+  currentView(): View;
   onError(message: string): void;
 }
 
@@ -32,10 +35,35 @@ export class NoteSession {
   }
 
   start(): () => void {
+    void this.restoreView();
     return this.bridge.onVisibility((state) => {
-      if (state === "hidden") void this.flush();
-      else void this.enqueue(() => this.reloadIfChangedOnDisk());
+      if (state === "hidden") {
+        void this.saveView();
+        void this.flush();
+      } else {
+        void this.enqueue(async () => {
+          await this.reloadIfChangedOnDisk();
+          await this.restoreView();
+        });
+      }
     });
+  }
+
+  private async saveView(): Promise<void> {
+    try {
+      await this.bridge.writeView(this.handlers.currentView());
+    } catch (error) {
+      this.handlers.onError(String(error));
+    }
+  }
+
+  private async restoreView(): Promise<void> {
+    try {
+      const view = await this.bridge.readView();
+      if (view) this.handlers.onView(view);
+    } catch (error) {
+      this.handlers.onError(String(error));
+    }
   }
 
   onChange(serialize: () => string): void {

@@ -2,7 +2,8 @@ import { Excalidraw, MainMenu } from "@excalidraw/excalidraw";
 import type { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types";
 import { useEffect, useRef, useState } from "react";
 import { NoteSession } from "./note/NoteSession";
-import { applyScene, parseScene, serializeScene } from "./note/scene";
+import { escapeAction } from "./note/escape";
+import { applyScene, applyView, currentView, parseScene, serializeScene } from "./note/scene";
 import { tauriBridge } from "./note/tauriBridge";
 import { useSystemTheme } from "./systemTheme";
 
@@ -38,7 +39,12 @@ function App() {
           setError(`Fichier de Note illisible, sauvegarde suspendue : ${String(e)}`);
           return false;
         });
-    const session = new NoteSession(tauriBridge, { onReload: showScene, onError: setError });
+    const session = new NoteSession(tauriBridge, {
+      onReload: showScene,
+      onView: (view) => applyView(api, view),
+      currentView: () => currentView(api),
+      onError: setError,
+    });
     session.load().then(async (content) => {
       if (!active) return;
       if (content !== null && !(await showScene(content))) return;
@@ -51,6 +57,24 @@ function App() {
       sessionRef.current = null;
       stop?.();
     };
+  }, [api]);
+
+  useEffect(() => {
+    if (!api) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      switch (escapeAction(api.getAppState())) {
+        case "deselect":
+          api.updateScene({ appState: { selectedElementIds: {} } });
+          break;
+        case "hide":
+          event.preventDefault();
+          tauriBridge.hideNote().catch((e) => setError(String(e)));
+          break;
+      }
+    };
+    window.addEventListener("keydown", onKeyDown, true);
+    return () => window.removeEventListener("keydown", onKeyDown, true);
   }, [api]);
 
   return (
