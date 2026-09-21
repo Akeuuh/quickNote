@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 import type { NoteBridge, NoteFile } from "./bridge";
 import type { Visibility } from "../visibility";
+import type { View } from "./view";
 import { AUTO_SAVE_DELAY_MS, NoteSession } from "./NoteSession";
 
 class FakeBridge implements NoteBridge {
@@ -11,6 +12,7 @@ class FakeBridge implements NoteBridge {
   writeError: Error | null = null;
   writeGate: Promise<void> | null = null;
   readGate: (() => void) | null = null;
+  view: View | null = null;
   private handlers = new Set<(state: Visibility) => void>();
 
   async readNote(): Promise<NoteFile> {
@@ -36,6 +38,16 @@ class FakeBridge implements NoteBridge {
     return this.mtime;
   }
 
+  async readView(): Promise<View | null> {
+    return this.view;
+  }
+
+  async writeView(view: View): Promise<void> {
+    this.view = view;
+  }
+
+  async hideNote(): Promise<void> {}
+
   onVisibility(handler: (state: Visibility) => void): () => void {
     this.handlers.add(handler);
     return () => this.handlers.delete(handler);
@@ -52,8 +64,12 @@ class FakeBridge implements NoteBridge {
   }
 }
 
+const VIEW: View = { scrollX: 10, scrollY: -20, zoom: 1.5 };
+
 let bridge: FakeBridge;
 let onReload: Mock<(content: string) => void>;
+let onView: Mock<(view: View) => void>;
+let currentView: View;
 let onError: Mock<(message: string) => void>;
 let session: NoteSession;
 
@@ -61,8 +77,15 @@ beforeEach(() => {
   vi.useFakeTimers();
   bridge = new FakeBridge();
   onReload = vi.fn();
+  onView = vi.fn();
   onError = vi.fn();
-  session = new NoteSession(bridge, { onReload, onError });
+  currentView = VIEW;
+  session = new NoteSession(bridge, {
+    onReload,
+    onView,
+    currentView: () => currentView,
+    onError,
+  });
 });
 
 afterEach(() => {
@@ -211,5 +234,47 @@ describe("shown", () => {
     await bridge.emit("hidden");
     await bridge.emit("shown");
     expect(onReload).not.toHaveBeenCalled();
+  });
+});
+
+describe("Vue", () => {
+  it("writes the current Vue through the Bridge at hidden", async () => {
+    await session.load();
+    session.start();
+    expect(bridge.view).toBeNull();
+    await bridge.emit("hidden");
+    expect(bridge.view).toEqual(VIEW);
+  });
+
+  it("reads the Vue back at start and at shown", async () => {
+    bridge.view = VIEW;
+    await session.load();
+    currentView = { scrollX: 0, scrollY: 0, zoom: 1 };
+    session.start();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(onView).toHaveBeenNthCalledWith(1, VIEW);
+    await bridge.emit("shown");
+    expect(onView).toHaveBeenCalledTimes(2);
+    expect(onView).toHaveBeenNthCalledWith(2, VIEW);
+  });
+
+  it("restores the Vue only after the disk reload at shown", async () => {
+    bridge.editOnDisk("v1");
+    bridge.view = VIEW;
+    await session.load();
+    session.start();
+    await vi.advanceTimersByTimeAsync(0);
+    onView.mockImplementation(() => session.onChange(() => "v1"));
+    bridge.editOnDisk("v2");
+    await bridge.emit("shown");
+    expect(onReload).toHaveBeenCalledWith("v2");
+    expect(onView).toHaveBeenCalledTimes(2);
+  });
+
+  it("does nothing at start without a stored Vue", async () => {
+    await session.load();
+    session.start();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(onView).not.toHaveBeenCalled();
   });
 });
