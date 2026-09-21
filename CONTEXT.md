@@ -23,3 +23,7 @@ _Avoid_: Hotkey, touche
 **Afficher / Masquer**:
 Les deux seuls états de la Note. Masquer ne ferme rien et ne perd rien ; Afficher ramène la Note exactement où elle était.
 _Avoid_: Ouvrir, fermer, quitter
+
+**Bridge**:
+L'unique interface du front vers Tauri : lire et écrire le Fichier de Note, obtenir son mtime, s'abonner à Afficher / Masquer. Toute la logique front est testée contre un Bridge fake en mémoire.
+_Avoid_: API, IPC, invoke (dans la logique métier)

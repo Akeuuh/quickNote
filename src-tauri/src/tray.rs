@@ -29,7 +29,7 @@ pub fn setup(app: &AppHandle) -> tauri::Result<()> {
                     eprintln!("note window: {error}");
                 }
             }
-            QUIT => app.exit(0),
+            QUIT => note_window::hide_then_quit(app.clone()),
             _ => {}
         })
         .build(app)?;
