@@ -14,7 +14,10 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             note_file::read_note,
             note_file::write_note,
-            note_file::note_mtime
+            note_file::note_mtime,
+            preferences::get_view,
+            preferences::set_view,
+            note_window::hide_note
         ])
         .setup(|app| {
             app.set_activation_policy(ActivationPolicy::Accessory);

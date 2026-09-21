@@ -1,4 +1,5 @@
 import type { Visibility } from "../visibility";
+import type { View } from "./view";
 
 export interface NoteFile {
   content: string | null;
@@ -9,5 +10,8 @@ export interface NoteBridge {
   readNote(): Promise<NoteFile>;
   writeNote(content: string): Promise<number>;
   noteMtime(): Promise<number>;
+  readView(): Promise<View | null>;
+  writeView(view: View): Promise<void>;
+  hideNote(): Promise<void>;
   onVisibility(handler: (state: Visibility) => void): () => void;
 }

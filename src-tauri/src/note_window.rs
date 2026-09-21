@@ -58,6 +58,11 @@ pub fn hide(app: &AppHandle) -> tauri::Result<()> {
     app.emit(HIDDEN, ())
 }
 
+#[tauri::command]
+pub fn hide_note(app: AppHandle) -> Result<(), String> {
+    hide(&app).map_err(|e| e.to_string())
+}
+
 pub fn toggle(app: &AppHandle) -> tauri::Result<()> {
     if window(app)?.is_visible()? {
         hide(app)
