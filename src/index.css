@@ -4,6 +4,31 @@ body,
   height: 100%;
   margin: 0;
   overflow: hidden;
+  background: transparent;
+}
+
+.note {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.note[data-theme="dark"] {
+  background: #121212;
+}
+
+.note__handle {
+  flex: none;
+  height: 14px;
+  cursor: grab;
+}
+
+.note__canvas {
+  flex: 1;
+  min-height: 0;
 }
 
 .default-sidebar-trigger {

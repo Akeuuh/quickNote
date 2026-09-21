@@ -31,3 +31,15 @@ Les polices Excalidraw sont copiées depuis `node_modules` dans `dist/fonts` au 
 ## QA manuelle
 
 Checklist à dérouler avant une release. Chaque ticket ajoute ses cas.
+
+### Overlay (#3)
+
+- [x] ⌥⌘N depuis une autre app affiche la Note avec le focus clavier ; ⌥⌘N à nouveau la masque et rend le focus à l'app précédente
+- [x] Un clic hors de la Note la masque
+- [ ] « Exporter en image » ouvre le panneau d'enregistrement sans masquer la Note
+- [ ] Depuis une app en plein écran : la Note apparaît par-dessus sans changer de Space
+- [ ] Changer de Space puis ⌥⌘N : la Note apparaît sur le Space courant
+- [ ] Dessiner, masquer, afficher : le contenu est intact
+- [ ] Fenêtre sans barre de titre, coins arrondis, ombre ; la bande du haut déplace la fenêtre ; les bords redimensionnent
+- [x] Icône barre de menus avec « Afficher la Note » et « Quitter » ; aucune icône Dock, absente de Cmd+Tab
+- [ ] En dev : `[note] shown` / `[note] hidden` dans la console web à chaque bascule

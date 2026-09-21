@@ -17,11 +17,16 @@ function App() {
   const theme = useSystemTheme();
 
   return (
-    <Excalidraw theme={theme} UIOptions={UI_OPTIONS}>
-      <MainMenu>
-        <MainMenu.DefaultItems.SaveAsImage />
-      </MainMenu>
-    </Excalidraw>
+    <div className="note" data-theme={theme}>
+      <div className="note__handle" data-tauri-drag-region />
+      <div className="note__canvas">
+        <Excalidraw theme={theme} UIOptions={UI_OPTIONS} autoFocus>
+          <MainMenu>
+            <MainMenu.DefaultItems.SaveAsImage />
+          </MainMenu>
+        </Excalidraw>
+      </div>
+    </div>
   );
 }
 
