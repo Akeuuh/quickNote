@@ -32,7 +32,7 @@ Les polices Excalidraw sont copiées depuis `node_modules` dans `dist/fonts` au 
 
 ## Release
 
-Pousser un tag `v*` déclenche `.github/workflows/release.yml` : build universel (Apple Silicon + Intel), signature Developer ID, notarisation, publication d'une GitHub Release avec `QuickNote.app.tar.gz`, `.dmg` et `latest.json` (métadonnées de l'updater). Le workflow échoue dès la première étape si un secret manque.
+Pousser un tag `v*` déclenche `.github/workflows/release.yml` : build universel (Apple Silicon + Intel), signature Developer ID, notarisation, publication d'une GitHub Release avec `QuickNote.app.tar.gz`, `.dmg` et `latest.json` (métadonnées de l'updater). Le workflow échoue dès la première étape si un secret obligatoire manque.
 
 ### Version
 
@@ -58,7 +58,7 @@ git push && git push --tags
 | `APPLE_PASSWORD` | Mot de passe **d'application** (pas le mot de passe du compte) | appleid.apple.com › Connexion et sécurité › Mots de passe pour app |
 | `APPLE_TEAM_ID` | Identifiant d'équipe (10 caractères) | developer.apple.com › Membership |
 | `TAURI_SIGNING_PRIVATE_KEY` | Contenu du fichier de clé privée updater | voir ci-dessous |
-| `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` | Mot de passe de cette clé (chaîne vide si aucun) | voir ci-dessous |
+| `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` | Mot de passe de cette clé. **Optionnel** : ne pas créer le secret si la clé n'en a pas (GitHub refuse les secrets vides) | voir ci-dessous |
 
 ### Clé updater
 
