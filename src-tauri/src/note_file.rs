@@ -1,13 +1,14 @@
 use std::{
-    fs,
-    io::{self, Write},
+    fs, io,
     path::{Path, PathBuf},
     sync::Mutex,
-    time::{SystemTime, UNIX_EPOCH},
+    time::UNIX_EPOCH,
 };
 
 use serde::Serialize;
 use tauri::{AppHandle, Manager, State};
+
+use crate::atomic_write::atomic_write;
 
 pub const DEFAULT_FILE_NAME: &str = "note.excalidraw";
 
@@ -60,24 +61,7 @@ fn read(path: &Path) -> io::Result<NoteFile> {
 }
 
 fn write(path: &Path, content: &str) -> io::Result<u64> {
-    if let Some(parent) = path.parent() {
-        fs::create_dir_all(parent)?;
-    }
-    let nanos = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map(|d| d.subsec_nanos())
-        .unwrap_or(0);
-    let tmp = path.with_extension(format!("tmp-{}-{nanos}", std::process::id()));
-    let result = (|| {
-        let mut file = fs::File::create(&tmp)?;
-        file.write_all(content.as_bytes())?;
-        file.sync_all()?;
-        fs::rename(&tmp, path)
-    })();
-    if result.is_err() {
-        let _ = fs::remove_file(&tmp);
-    }
-    result?;
+    atomic_write(path, content)?;
     mtime_ms(path)
 }
 
