@@ -28,6 +28,55 @@ cd src-tauri && cargo test
 
 Les polices Excalidraw sont copiées depuis `node_modules` dans `dist/fonts` au build (`vite-plugin-static-copy`) pour fonctionner hors ligne.
 
+`pnpm tauri build` signe aussi l'artefact updater et exige la clé privée (voir « Release ») : en local, exporter `TAURI_SIGNING_PRIVATE_KEY_PATH=~/.tauri/quicknote.key` et `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` (vide si la clé n'en a pas). Sans clé, le `.app` est produit mais la commande termine en erreur.
+
+## Release
+
+Pousser un tag `v*` déclenche `.github/workflows/release.yml` : build universel (Apple Silicon + Intel), signature Developer ID, notarisation, publication d'une GitHub Release avec `QuickNote.app.tar.gz`, `.dmg` et `latest.json` (métadonnées de l'updater). Le workflow échoue dès la première étape si un secret manque.
+
+### Version
+
+Un seul endroit : `"version"` dans `package.json` (`src-tauri/tauri.conf.json` pointe dessus). Procédure :
+
+```sh
+pnpm version 0.2.0 --no-git-tag-version
+git commit -am "chore: release v0.2.0"
+git tag v0.2.0
+git push && git push --tags
+```
+
+### Secrets GitHub Actions
+
+À créer dans Settings › Secrets and variables › Actions. Aucun n'est commité.
+
+| Secret | Contenu | Comment l'obtenir |
+|---|---|---|
+| `APPLE_CERTIFICATE` | Certificat **Developer ID Application** au format `.p12`, encodé base64 | Xcode › Settings › Accounts › Manage Certificates › + › Developer ID Application, puis Trousseau : exporter le certificat (avec sa clé privée) en `.p12`, puis `base64 -i cert.p12 \| pbcopy` |
+| `APPLE_CERTIFICATE_PASSWORD` | Mot de passe choisi à l'export du `.p12` | idem |
+| `APPLE_SIGNING_IDENTITY` | Nom complet de l'identité, ex. `Developer ID Application: Prénom Nom (TEAMID)` | `security find-identity -v -p codesigning` |
+| `APPLE_ID` | Identifiant Apple du compte développeur | — |
+| `APPLE_PASSWORD` | Mot de passe **d'application** (pas le mot de passe du compte) | appleid.apple.com › Connexion et sécurité › Mots de passe pour app |
+| `APPLE_TEAM_ID` | Identifiant d'équipe (10 caractères) | developer.apple.com › Membership |
+| `TAURI_SIGNING_PRIVATE_KEY` | Contenu du fichier de clé privée updater | voir ci-dessous |
+| `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` | Mot de passe de cette clé (chaîne vide si aucun) | voir ci-dessous |
+
+### Clé updater
+
+Les artefacts updater sont signés (minisign) ; l'app n'installe une mise à jour que si la signature correspond à `plugins.updater.pubkey` dans `src-tauri/tauri.conf.json`. Générer la paire une seule fois, **hors du dépôt** :
+
+```sh
+pnpm tauri signer generate -w ~/.tauri/quicknote.key
+```
+
+Coller le contenu de `~/.tauri/quicknote.key.pub` dans `plugins.updater.pubkey`, et celui de `~/.tauri/quicknote.key` dans le secret `TAURI_SIGNING_PRIVATE_KEY`. Perdre la clé privée = impossible de publier une mise à jour installable par les versions déjà distribuées.
+
+### Vérifier une Release
+
+```sh
+spctl --assess --type execute -vv QuickNote.app   # accepted, source=Notarized Developer ID
+xcrun stapler validate QuickNote.app
+```
+
 ## QA manuelle
 
 Checklist à dérouler avant une release. Chaque ticket ajoute ses cas.
@@ -87,3 +136,10 @@ Préférences : `~/Library/Application Support/com.aleclercq.quicknote/preferenc
 - [ ] « Ouvrir un fichier existant… » sur un `.excalidraw` : son contenu est chargé
 - [ ] Modifications en attente avant la bascule : écrites dans l'ancien fichier (tests Vitest)
 - [ ] Lancement au login : activé au premier lancement, désactivable, visible dans Réglages Système › Général › Ouverture
+
+### Release (#8)
+
+- [ ] `git tag v0.1.0 && git push --tags` déclenche le workflow et publie une Release
+- [ ] La Release contient `QuickNote.app.tar.gz` + `.sig`, le `.dmg` et `latest.json`
+- [ ] `spctl --assess` accepte l'app ; elle s'ouvre sans avertissement Gatekeeper sur un Mac vierge
+- [ ] Supprimer un secret et relancer : le workflow échoue à la première étape en nommant le secret
